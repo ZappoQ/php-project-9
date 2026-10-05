@@ -9,7 +9,7 @@ require __DIR__ . '/../vendor/autoload.php';
 
 // Загружаем переменные окружения
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
 
 // Создаем DI-контейнер
 $container = new Container();
