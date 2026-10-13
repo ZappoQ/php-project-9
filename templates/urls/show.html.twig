@@ -1,0 +1,24 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}{{ url.name }}{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold mb-4">Сайт: {{ url.name }}</h1>
+
+    <table data-test="url" class="w-full bg-white rounded shadow">
+        <tbody>
+            <tr class="border-b">
+                <td class="p-3 font-bold">ID</td>
+                <td class="p-3">{{ url.id }}</td>
+            </tr>
+            <tr class="border-b">
+                <td class="p-3 font-bold">Имя</td>
+                <td class="p-3">{{ url.name }}</td>
+            </tr>
+            <tr class="border-b">
+                <td class="p-3 font-bold">Дата создания</td>
+                <td class="p-3">{{ url.created_at }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

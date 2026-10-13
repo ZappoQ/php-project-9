@@ -4,25 +4,32 @@ use DI\Container;
 use Slim\Factory\AppFactory;
 use Slim\Views\Twig;
 use Slim\Views\TwigMiddleware;
+use Slim\Flash\Messages;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// Загружаем переменные окружения
+// Запускаем сессию для flash-сообщений
+session_start();
+
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();
 
-// Создаем DI-контейнер
 $container = new Container();
 
-// Создаем приложение Slim
+$container->set(Messages::class, function () {
+    return new Messages();
+});
+
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-// Подключаем Twig
 $twig = Twig::create(__DIR__ . '/../templates', ['cache' => false]);
+
+// Передаём flash в Twig как глобальную переменную
+$twig->getEnvironment()->addGlobal('flash', $container->get(Messages::class)->getMessages());
+
 $app->add(TwigMiddleware::create($app, $twig));
 
-// Подключаем маршруты
 require __DIR__ . '/../src/routes.php';
 
 $app->run();

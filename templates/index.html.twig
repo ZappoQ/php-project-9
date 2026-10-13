@@ -7,7 +7,7 @@
         <h1 class="text-3xl font-bold mb-4">Анализатор страниц</h1>
         <p class="text-gray-600 mb-6">Бесплатно проверяйте сайты на SEO-пригодность</p>
 
-        <form action="/sites" method="POST" class="bg-white p-6 rounded-lg shadow">
+        <form action="{{ url_for('urls.store') }}" method="POST" class="bg-white p-6 rounded-lg shadow">
             <div class="mb-4">
                 <label for="url" class="block text-gray-700 font-medium mb-2">Введите URL:</label>
                 <input
@@ -20,8 +20,8 @@
             </div>
             <button
                     type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded
-                    uppercase">
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded uppercase"
+            >
                 Проверить
             </button>
         </form>

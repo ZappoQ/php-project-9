@@ -15,5 +15,8 @@ build-css:
 lint:
 	./vendor/bin/phpcs
 
+db-load:
+	psql -a -d $(DATABASE_URL) -f database.sql
+
 lint-fix:
 	./vendor/bin/phpcbf

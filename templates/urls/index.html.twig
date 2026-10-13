@@ -1,0 +1,26 @@
+{% extends "layout.html.twig" %}
+
+{% block title %}Сайты{% endblock %}
+
+{% block content %}
+    <h1 class="text-3xl font-bold mb-4">Сайты</h1>
+
+    <table data-test="urls" class="w-full bg-white rounded shadow">
+        <thead>
+        <tr class="bg-gray-200">
+            <th class="p-3 text-left">ID</th>
+            <th class="p-3 text-left">Имя</th>
+            <th class="p-3 text-left">Дата создания</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for url in urls %}
+            <tr class="border-b">
+                <td class="p-3">{{ url.id }}</td>
+                <td class="p-3"><a href="{{ url_for('urls.show', {id: url.id}) }}" class="text-blue-600 hover:underline">{{ url.name }}</a></td>
+                <td class="p-3">{{ url.created_at }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
