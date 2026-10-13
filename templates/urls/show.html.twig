@@ -37,6 +37,7 @@
             <thead>
             <tr class="bg-gray-200">
                 <th class="p-3 text-left">ID</th>
+                <th class="p-3 text-left">Код ответа</th>
                 <th class="p-3 text-left">Дата создания</th>
             </tr>
             </thead>
@@ -44,6 +45,7 @@
             {% for check in checks %}
                 <tr class="border-b">
                     <td class="p-3">{{ check.id }}</td>
+                    <td class="p-3">{{ check.status_code ?? '' }}</td>
                     <td class="p-3">{{ check.created_at }}</td>
                 </tr>
             {% endfor %}

@@ -124,6 +124,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     $urlId = (int) $args['url_id'];
     $pdo = Database::getConnection();
 
+    // Проверяем, что URL существует
     $stmt = $pdo->prepare('SELECT * FROM urls WHERE id = :id');
     $stmt->execute(['id' => $urlId]);
     $url = $stmt->fetch();
@@ -132,20 +133,49 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         return $response->withStatus(404);
     }
 
+    /** @var Messages $flash */
+    $flash = $this->get(Messages::class);
+
+    try {
+        // Создаём HTTP-клиент
+        $client = new \GuzzleHttp\Client([
+            'timeout' => 10,
+            'allow_redirects' => [
+                'max' => 5,
+                'strict' => true,
+                'referer' => true,
+                'protocols' => ['http', 'https'],
+                'track_redirects' => false,
+            ],
+            'http_errors' => false,
+        ]);
+
+        // Выполняем запрос
+        $res = $client->request('GET', $url['name']);
+        $statusCode = $res->getStatusCode();
+
+    } catch (\GuzzleHttp\Exception\ConnectException $e) {
+        // Сетевая ошибка (сайт недоступен)
+        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+        return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
+
+    } catch (\GuzzleHttp\Exception\GuzzleException $e) {
+        // Прочие ошибки Guzzle
+        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+        return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
+    }
+
+    // Сохраняем проверку
     $stmt = $pdo->prepare('
-        INSERT INTO url_checks (url_id, created_at)
-        VALUES (:url_id, :created_at)
+        INSERT INTO url_checks (url_id, status_code, created_at)
+        VALUES (:url_id, :status_code, :created_at)
     ');
     $stmt->execute([
         'url_id' => $urlId,
+        'status_code' => $statusCode,
         'created_at' => Carbon::now()->toDateTimeString(),
     ]);
 
-    /** @var Messages $flash */
-    $flash = $this->get(Messages::class);
     $flash->addMessage('success', 'Страница успешно проверена');
-
-    return $response
-        ->withHeader('Location', '/urls/' . $urlId)
-        ->withStatus(302);
+    return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
 })->setName('urls.checks.store');
