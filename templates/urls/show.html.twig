@@ -1,34 +1,59 @@
-<h2 class="text-2xl font-bold mb-4">Проверки</h2>
+{% extends "layout.html.twig" %}
 
-<form method="post" action="{{ url_for('urls.checks.store', {url_id: url.id}) }}" class="mb-4">
-    <input
-            type="submit"
-            value="Запустить проверку"
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
-    />
-</form>
+{% block title %}{{ url.name }}{% endblock %}
 
-<table data-test="checks" class="w-full bg-white rounded shadow">
-    <thead>
-    <tr class="bg-gray-200">
-        <th class="p-3 text-left">ID</th>
-        <th class="p-3 text-left">Код ответа</th>
-        <th class="p-3 text-left">h1</th>
-        <th class="p-3 text-left">title</th>
-        <th class="p-3 text-left">description</th>
-        <th class="p-3 text-left">Дата создания</th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for check in checks %}
+{% block content %}
+    <h1 class="text-3xl font-bold mb-4">Сайт: {{ url.name }}</h1>
+
+    <table data-test="url" class="w-full bg-white rounded shadow mb-8">
+        <tbody>
         <tr class="border-b">
-            <td class="p-3">{{ check.id }}</td>
-            <td class="p-3">{{ check.status_code ?? '' }}</td>
-            <td class="p-3">{{ check.h1 is not null ? check.h1|slice(0, 200) ~ (check.h1|length > 200 ? '...' : '') : '' }}</td>
-            <td class="p-3">{{ check.title is not null ? check.title|slice(0, 200) ~ (check.title|length > 200 ? '...' : '') : '' }}</td>
-            <td class="p-3">{{ check.description is not null ? check.description|slice(0, 200) ~ (check.description|length > 200 ? '...' : '') : '' }}</td>
-            <td class="p-3">{{ check.created_at }}</td>
+            <td class="p-3 font-bold">ID</td>
+            <td class="p-3">{{ url.id }}</td>
         </tr>
-    {% endfor %}
-    </tbody>
-</table>
+        <tr class="border-b">
+            <td class="p-3 font-bold">Имя</td>
+            <td class="p-3">{{ url.name }}</td>
+        </tr>
+        <tr class="border-b">
+            <td class="p-3 font-bold">Дата создания</td>
+            <td class="p-3">{{ url.created_at }}</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <h2 class="text-2xl font-bold mb-4">Проверки</h2>
+
+    <form method="post" action="{{ url_for('urls.checks.store', {url_id: url.id}) }}" class="mb-4">
+        <input
+                type="submit"
+                value="Запустить проверку"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer"
+        />
+    </form>
+
+    <table data-test="checks" class="w-full bg-white rounded shadow">
+        <thead>
+        <tr class="bg-gray-200">
+            <th class="p-3 text-left">ID</th>
+            <th class="p-3 text-left">Код ответа</th>
+            <th class="p-3 text-left">h1</th>
+            <th class="p-3 text-left">title</th>
+            <th class="p-3 text-left">description</th>
+            <th class="p-3 text-left">Дата создания</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for check in checks %}
+            <tr class="border-b">
+                <td class="p-3">{{ check.id }}</td>
+                <td class="p-3">{{ check.status_code ?? '' }}</td>
+                <td class="p-3">{{ check.h1 is not null ? check.h1|slice(0, 200) ~ (check.h1|length > 200 ? '...' : '') : '' }}</td>
+                <td class="p-3">{{ check.title is not null ? check.title|slice(0, 200) ~ (check.title|length > 200 ? '...' : '') : '' }}</td>
+                <td class="p-3">{{ check.description is not null ? check.description|slice(0, 200) ~ (check.description|length > 200 ? '...' : '') : '' }}</td>
+                <td class="p-3">{{ check.created_at }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

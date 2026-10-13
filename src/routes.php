@@ -11,8 +11,13 @@ use Valitron\Validator;
 
 // Главная страница
 $app->get('/', function (Request $request, Response $response) {
+    /** @var Messages $flash */
+    $flash = $this->get(Messages::class);
+
     $view = Twig::fromRequest($request);
-    return $view->render($response, 'index.html.twig');
+    return $view->render($response, 'index.html.twig', [
+        'flash' => $flash->getMessages(),
+    ]);
 })->setName('home');
 
 // Список всех URL
@@ -39,9 +44,13 @@ $app->get('/urls', function (Request $request, Response $response) {
     ');
     $urls = $stmt->fetchAll();
 
+    /** @var Messages $flash */
+    $flash = $this->get(Messages::class);
+
     $view = Twig::fromRequest($request);
     return $view->render($response, 'urls/index.html.twig', [
         'urls' => $urls,
+        'flash' => $flash->getMessages(),
     ]);
 })->setName('urls.index');
 
@@ -65,10 +74,14 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
     $stmt->execute(['url_id' => $url['id']]);
     $checks = $stmt->fetchAll();
 
+    /** @var Messages $flash */
+    $flash = $this->get(Messages::class);
+
     $view = Twig::fromRequest($request);
     return $view->render($response, 'urls/show.html.twig', [
         'url' => $url,
         'checks' => $checks,
+        'flash' => $flash->getMessages(),
     ]);
 })->setName('urls.show');
 
@@ -87,11 +100,11 @@ $app->post('/urls', function (Request $request, Response $response) {
 
     if (!$validator->validate()) {
         $errors = $validator->errors();
-        $errorMessage = array_values($errors)[0][0];
+        $flash->addMessage('error', array_values($errors)[0][0]);
 
         $view = Twig::fromRequest($request);
         return $view->render($response->withStatus(422), 'index.html.twig', [
-            'error' => $errorMessage,
+            'flash' => $flash->getMessages(),
         ]);
     }
 
@@ -155,6 +168,7 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
+
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
@@ -163,7 +177,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
     }
 
-    // Парсим HTML
     $crawler = new Crawler($html);
 
     $h1 = $crawler->filter('h1')->count() > 0
@@ -178,12 +191,10 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         ? trim($crawler->filter('meta[name="description"]')->first()->attr('content'))
         : null;
 
-    // Обрезаем длинные значения
     $h1 = $h1 !== null ? mb_substr($h1, 0, 255) : null;
     $title = $title !== null ? mb_substr($title, 0, 255) : null;
     $description = $description !== null ? mb_substr($description, 0, 255) : null;
 
-    // Сохраняем проверку
     $stmt = $pdo->prepare('
         INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
         VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
