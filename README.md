@@ -39,4 +39,4 @@ cd php-project-9
 
 ## Демо
 
-Приложение доступно по адресу: https://php-project-9-o77s.onrender.com
+Приложение доступно по адресу: https://php-project-9-o77s.onrender.com/
