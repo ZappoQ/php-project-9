@@ -1,20 +1,29 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
-<nav class="bg-gray-800 p-4 text-white">
-    <a href="/" class="text-xl font-bold">Анализатор страниц</a>
-</nav>
-<main class="container mx-auto p-4">
-    <h1 class="text-2xl mb-4">{{ title }}</h1>
-    <div class="bg-white p-6 rounded shadow">
-        <p>Приложение работает!</p>
+{% extends "layout.html.twig" %}
+
+{% block title %}Анализатор страниц{% endblock %}
+
+{% block content %}
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-4">Анализатор страниц</h1>
+        <p class="text-gray-600 mb-6">Бесплатно проверяйте сайты на SEO-пригодность</p>
+
+        <form action="/sites" method="POST" class="bg-white p-6 rounded-lg shadow">
+            <div class="mb-4">
+                <label for="url" class="block text-gray-700 font-medium mb-2">Введите URL:</label>
+                <input
+                        type="text"
+                        name="url"
+                        id="url"
+                        class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://www.example.com"
+                >
+            </div>
+            <button
+                    type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+                Проверить
+            </button>
+        </form>
     </div>
-</main>
-</body>
-</html>
+{% endblock %}

@@ -3,3 +3,5 @@
 .idea/
 *.log
 .DS_Store
+node_modules/
+public/assets/css/main.css

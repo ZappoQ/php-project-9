@@ -1,0 +1,29 @@
+{
+  "name": "php-project-9",
+  "version": "1.0.0",
+  "description": "[![hexlet-check](https://github.com/ZappoQ/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ZappoQ/php-project-9/actions)",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "build:css": "tailwindcss --input assets/css/source.css --output public/assets/css/main.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZappoQ/php-project-9.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ZappoQ/php-project-9/issues"
+  },
+  "homepage": "https://github.com/ZappoQ/php-project-9#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/forms": "^0.5.11",
+    "tailwindcss": "^4.3.3"
+  }
+}
