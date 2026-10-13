@@ -88,7 +88,9 @@ $app->post('/urls', function (Request $request, Response $response) {
     if (!$validator->validate()) {
         $errors = $validator->errors();
         $flash->addMessage('error', array_values($errors)[0][0]);
-        return $response->withHeader('Location', '/')->withStatus(302);
+
+        $view = Twig::fromRequest($request);
+        return $view->render($response->withStatus(422), 'index.html.twig');
     }
 
     $parsed = parse_url($url);

@@ -1,6 +1,6 @@
 # Анализатор страниц (PHP)
 
-[![hexlet-check](https://github.com/ZappoQ/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ZappoQ/php-project-9/actions)
+[![hexlet-check](https://github.com/ZappoQ/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ZappoQ/php-project-9/actions/workflows/hexlet-check.yml)
 
 Создадите полноценное веб-приложение, которое выполняет запросы по сети и сохраняет данные в базу данных. Настроите CI и выполните деплой.
 
