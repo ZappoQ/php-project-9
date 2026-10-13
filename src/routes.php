@@ -152,7 +152,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
-
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
