@@ -153,12 +153,10 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         // Выполняем запрос
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
-
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
         // Сетевая ошибка (сайт недоступен)
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
-
     } catch (\GuzzleHttp\Exception\GuzzleException $e) {
         // Прочие ошибки Guzzle
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
