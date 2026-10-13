@@ -100,11 +100,11 @@ $app->post('/urls', function (Request $request, Response $response) {
 
     if (!$validator->validate()) {
         $errors = $validator->errors();
-        $flash->addMessage('error', array_values($errors)[0][0]);
+        $errorMessage = array_values($errors)[0][0];
 
         $view = Twig::fromRequest($request);
         return $view->render($response->withStatus(422), 'index.html.twig', [
-            'flash' => $flash->getMessages(),
+            'error' => $errorMessage,
         ]);
     }
 
@@ -168,7 +168,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
-
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
