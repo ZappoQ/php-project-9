@@ -3,6 +3,12 @@
 {% block title %}Анализатор страниц{% endblock %}
 
 {% block content %}
+    {% if error is defined and error %}
+        <div role="alert" class="mb-4 p-4 rounded bg-red-100 text-red-800">
+            {{ error }}
+        </div>
+    {% endif %}
+
     <div class="max-w-2xl mx-auto">
         <h1 class="text-3xl font-bold mb-4">Анализатор страниц</h1>
         <p class="text-gray-600 mb-6">Бесплатно проверяйте сайты на SEO-пригодность</p>
