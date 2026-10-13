@@ -20,3 +20,6 @@ db-load:
 
 lint-fix:
 	./vendor/bin/phpcbf
+
+test:
+	./vendor/bin/phpunit
