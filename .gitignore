@@ -1,7 +1,7 @@
 /vendor/
+node_modules/
+public/assets/css/main.css
 .env
 .idea/
 *.log
 .DS_Store
-node_modules/
-public/assets/css/main.css
