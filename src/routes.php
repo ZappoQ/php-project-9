@@ -6,6 +6,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Flash\Messages;
 use Slim\Views\Twig;
+use Symfony\Component\DomCrawler\Crawler;
 use Valitron\Validator;
 
 // Главная страница
@@ -124,7 +125,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     $urlId = (int) $args['url_id'];
     $pdo = Database::getConnection();
 
-    // Проверяем, что URL существует
     $stmt = $pdo->prepare('SELECT * FROM urls WHERE id = :id');
     $stmt->execute(['id' => $urlId]);
     $url = $stmt->fetch();
@@ -137,7 +137,6 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     $flash = $this->get(Messages::class);
 
     try {
-        // Создаём HTTP-клиент
         $client = new \GuzzleHttp\Client([
             'timeout' => 10,
             'allow_redirects' => [
@@ -150,27 +149,49 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
             'http_errors' => false,
         ]);
 
-        // Выполняем запрос
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
+        $html = (string) $res->getBody();
+
     } catch (\GuzzleHttp\Exception\ConnectException $e) {
-        // Сетевая ошибка (сайт недоступен)
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
     } catch (\GuzzleHttp\Exception\GuzzleException $e) {
-        // Прочие ошибки Guzzle
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
         return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
     }
 
+    // Парсим HTML
+    $crawler = new Crawler($html);
+
+    $h1 = $crawler->filter('h1')->count() > 0
+        ? trim($crawler->filter('h1')->first()->text())
+        : null;
+
+    $title = $crawler->filter('title')->count() > 0
+        ? trim($crawler->filter('title')->first()->text())
+        : null;
+
+    $description = $crawler->filter('meta[name="description"]')->count() > 0
+        ? trim($crawler->filter('meta[name="description"]')->first()->attr('content'))
+        : null;
+
+    // Обрезаем длинные значения
+    $h1 = $h1 !== null ? mb_substr($h1, 0, 255) : null;
+    $title = $title !== null ? mb_substr($title, 0, 255) : null;
+    $description = $description !== null ? mb_substr($description, 0, 255) : null;
+
     // Сохраняем проверку
     $stmt = $pdo->prepare('
-        INSERT INTO url_checks (url_id, status_code, created_at)
-        VALUES (:url_id, :status_code, :created_at)
+        INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
+        VALUES (:url_id, :status_code, :h1, :title, :description, :created_at)
     ');
     $stmt->execute([
         'url_id' => $urlId,
         'status_code' => $statusCode,
+        'h1' => $h1,
+        'title' => $title,
+        'description' => $description,
         'created_at' => Carbon::now()->toDateTimeString(),
     ]);
 

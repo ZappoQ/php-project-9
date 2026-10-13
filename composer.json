@@ -9,7 +9,9 @@
         "vlucas/valitron": "^1.4",
         "nesbot/carbon": "^3.14",
         "slim/flash": "^0.4.0",
-        "guzzlehttp/guzzle": "^8.2"
+        "guzzlehttp/guzzle": "^8.2",
+        "symfony/dom-crawler": "^8.1",
+        "symfony/css-selector": "^8.1"
     },
     "require-dev": {
         "phpunit/phpunit": "^13.4",

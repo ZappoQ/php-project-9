@@ -38,6 +38,9 @@
             <tr class="bg-gray-200">
                 <th class="p-3 text-left">ID</th>
                 <th class="p-3 text-left">Код ответа</th>
+                <th class="p-3 text-left">h1</th>
+                <th class="p-3 text-left">title</th>
+                <th class="p-3 text-left">description</th>
                 <th class="p-3 text-left">Дата создания</th>
             </tr>
             </thead>
@@ -46,6 +49,9 @@
                 <tr class="border-b">
                     <td class="p-3">{{ check.id }}</td>
                     <td class="p-3">{{ check.status_code ?? '' }}</td>
+                    <td class="p-3">{{ check.h1 is not null ? check.h1|slice(0, 200) ~ (check.h1|length > 200 ? '...' : '') : '' }}</td>
+                    <td class="p-3">{{ check.title is not null ? check.title|slice(0, 200) ~ (check.title|length > 200 ? '...' : '') : '' }}</td>
+                    <td class="p-3">{{ check.description is not null ? check.description|slice(0, 200) ~ (check.description|length > 200 ? '...' : '') : '' }}</td>
                     <td class="p-3">{{ check.created_at }}</td>
                 </tr>
             {% endfor %}
