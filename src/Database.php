@@ -12,7 +12,10 @@ class Database
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {
-            $databaseUrl = $_ENV['DATABASE_URL'] ?? '';
+            $databaseUrl = $_ENV['DATABASE_URL']
+                ?? $_SERVER['DATABASE_URL']
+                ?? getenv('DATABASE_URL')
+                ?? '';
 
             if (empty($databaseUrl)) {
                 throw new \RuntimeException('DATABASE_URL не задан в переменных окружения');
@@ -38,5 +41,23 @@ class Database
         }
 
         return self::$instance;
+    }
+
+    /**
+     * Создаёт таблицу urls, если её нет.
+     */
+    public static function migrate(): void
+    {
+        $pdo = self::getConnection();
+
+        $sql = '
+            CREATE TABLE IF NOT EXISTS urls (
+                id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+                name VARCHAR(255) NOT NULL UNIQUE,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+        ';
+
+        $pdo->exec($sql);
     }
 }

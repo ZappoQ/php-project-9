@@ -14,6 +14,11 @@ session_start();
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->safeLoad();
 
+// Создаём таблицы, если их нет
+if (isset($_ENV['DATABASE_URL']) || isset($_SERVER['DATABASE_URL']) || getenv('DATABASE_URL')) {
+    \App\Database::migrate();
+}
+
 $container = new Container();
 
 $container->set(Messages::class, function () {
