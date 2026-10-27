@@ -9,8 +9,8 @@
 <body class="min-h-screen bg-gray-100">
 <nav class="bg-gray-800 text-white p-4">
     <div class="container mx-auto flex gap-6">
-        <a href="/" class="font-bold hover:underline">Анализатор страниц</a>
-        <a href="/urls" class="hover:underline">Сайты</a>
+        <a href="{{ url_for('home') }}" class="font-bold hover:underline">Анализатор страниц</a>
+        <a href="{{ url_for('urls.index') }}" class="hover:underline">Сайты</a>
     </div>
 </nav>
 

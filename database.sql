@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS url_checks (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     url_id BIGINT NOT NULL REFERENCES urls(id) ON DELETE CASCADE,
     status_code INT,
-    h1 VARCHAR(255),
-    title VARCHAR(255),
+    h1 VARCHAR(1000),
+    title VARCHAR(1000),
     description TEXT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );

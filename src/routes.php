@@ -2,19 +2,22 @@
 
 use App\Database;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Exception\HttpNotFoundException;
 use Slim\Flash\Messages;
-use Slim\Views\Twig;
 use Symfony\Component\DomCrawler\Crawler;
 use Valitron\Validator;
 
 // Главная страница
 $app->get('/', function (Request $request, Response $response) {
-    /** @var Messages $flash */
     $flash = $this->get(Messages::class);
+    $view = $this->get('view');
 
-    $view = Twig::fromRequest($request);
     return $view->render($response, 'index.html.twig', [
         'flash' => $flash->getMessages(),
     ]);
@@ -24,30 +27,29 @@ $app->get('/', function (Request $request, Response $response) {
 $app->get('/urls', function (Request $request, Response $response) {
     $pdo = Database::getConnection();
 
-    $stmt = $pdo->query('
-        SELECT
-            urls.id,
-            urls.name,
-            urls.created_at,
-            MAX(url_checks.created_at) AS last_check_at,
-            (
-                SELECT status_code
-                FROM url_checks
-                WHERE url_checks.url_id = urls.id
-                ORDER BY created_at DESC
-                LIMIT 1
-            ) AS last_status_code
-        FROM urls
-        LEFT JOIN url_checks ON url_checks.url_id = urls.id
-        GROUP BY urls.id
-        ORDER BY urls.created_at DESC
-    ');
-    $urls = $stmt->fetchAll();
+    $urls = $pdo->query('SELECT id, name, created_at FROM urls ORDER BY created_at DESC')
+        ->fetchAll();
 
-    /** @var Messages $flash */
+    $checks = $pdo->query('
+        SELECT DISTINCT ON (url_id) url_id, status_code, created_at
+        FROM url_checks
+        ORDER BY url_id, created_at DESC
+    ')->fetchAll();
+
+    $checksByUrlId = [];
+    foreach ($checks as $check) {
+        $checksByUrlId[$check['url_id']] = $check;
+    }
+
+    foreach ($urls as &$url) {
+        $url['last_check_at'] = $checksByUrlId[$url['id']]['created_at'] ?? null;
+        $url['last_status_code'] = $checksByUrlId[$url['id']]['status_code'] ?? null;
+    }
+    unset($url);
+
     $flash = $this->get(Messages::class);
+    $view = $this->get('view');
 
-    $view = Twig::fromRequest($request);
     return $view->render($response, 'urls/index.html.twig', [
         'urls' => $urls,
         'flash' => $flash->getMessages(),
@@ -55,7 +57,7 @@ $app->get('/urls', function (Request $request, Response $response) {
 })->setName('urls.index');
 
 // Конкретный URL
-$app->get('/urls/{id}', function (Request $request, Response $response, array $args) {
+$app->get('/urls/{id:[0-9]+}', function (Request $request, Response $response, array $args) {
     $pdo = Database::getConnection();
 
     $stmt = $pdo->prepare('SELECT * FROM urls WHERE id = :id');
@@ -63,7 +65,7 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
     $url = $stmt->fetch();
 
     if (!$url) {
-        return $response->withStatus(404);
+        throw new HttpNotFoundException($request, 'URL не найден');
     }
 
     $stmt = $pdo->prepare('
@@ -74,10 +76,9 @@ $app->get('/urls/{id}', function (Request $request, Response $response, array $a
     $stmt->execute(['url_id' => $url['id']]);
     $checks = $stmt->fetchAll();
 
-    /** @var Messages $flash */
     $flash = $this->get(Messages::class);
+    $view = $this->get('view');
 
-    $view = Twig::fromRequest($request);
     return $view->render($response, 'urls/show.html.twig', [
         'url' => $url,
         'checks' => $checks,
@@ -95,16 +96,16 @@ $app->post('/urls', function (Request $request, Response $response) {
     $validator->rule('lengthMax', 'url', 255)->message('URL превышает 255 символов');
     $validator->rule('url', 'url')->message('Некорректный URL');
 
-    /** @var Messages $flash */
     $flash = $this->get(Messages::class);
 
     if (!$validator->validate()) {
         $errors = $validator->errors();
-        $errorMessage = array_values($errors)[0][0];
+        $errorMessage = reset($errors)[0] ?? 'Некорректный URL';
 
-        $view = Twig::fromRequest($request);
+        $view = $this->get('view');
         return $view->render($response->withStatus(422), 'index.html.twig', [
             'error' => $errorMessage,
+            'flash' => [],
         ]);
     }
 
@@ -119,7 +120,7 @@ $app->post('/urls', function (Request $request, Response $response) {
 
     if ($existing) {
         $flash->addMessage('error', 'Страница уже существует');
-        return $response->withHeader('Location', '/urls/' . $existing['id'])->withStatus(302);
+        return redirectTo($response, $request, 'urls.show', ['id' => $existing['id']]);
     }
 
     $stmt = $pdo->prepare('
@@ -134,11 +135,11 @@ $app->post('/urls', function (Request $request, Response $response) {
     $id = $stmt->fetchColumn();
 
     $flash->addMessage('success', 'Страница успешно добавлена');
-    return $response->withHeader('Location', '/urls/' . $id)->withStatus(302);
+    return redirectTo($response, $request, 'urls.show', ['id' => $id]);
 })->setName('urls.store');
 
 // Создание проверки
-$app->post('/urls/{url_id}/checks', function (Request $request, Response $response, array $args) {
+$app->post('/urls/{url_id:[0-9]+}/checks', function (Request $request, Response $response, array $args) {
     $urlId = (int) $args['url_id'];
     $pdo = Database::getConnection();
 
@@ -147,14 +148,13 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     $url = $stmt->fetch();
 
     if (!$url) {
-        return $response->withStatus(404);
+        throw new HttpNotFoundException($request, 'URL не найден');
     }
 
-    /** @var Messages $flash */
     $flash = $this->get(Messages::class);
 
     try {
-        $client = new \GuzzleHttp\Client([
+        $client = new Client([
             'timeout' => 10,
             'allow_redirects' => [
                 'max' => 5,
@@ -168,12 +168,15 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
-    } catch (\GuzzleHttp\Exception\ConnectException $e) {
+    } catch (ConnectException $e) {
         $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
-        return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
-    } catch (\GuzzleHttp\Exception\GuzzleException $e) {
-        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
-        return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
+        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
+    } catch (RequestException $e) {
+        $flash->addMessage('error', 'Сервер вернул ошибку при проверке');
+        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
+    } catch (GuzzleException $e) {
+        $flash->addMessage('error', 'Произошла ошибка при проверке');
+        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
     }
 
     $crawler = new Crawler($html);
@@ -190,9 +193,9 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
         ? trim($crawler->filter('meta[name="description"]')->first()->attr('content'))
         : null;
 
-    $h1 = $h1 !== null ? mb_substr($h1, 0, 255) : null;
-    $title = $title !== null ? mb_substr($title, 0, 255) : null;
-    $description = $description !== null ? mb_substr($description, 0, 255) : null;
+    $h1 = $h1 !== null ? mb_substr($h1, 0, 1000) : null;
+    $title = $title !== null ? mb_substr($title, 0, 1000) : null;
+    $description = $description !== null ? mb_substr($description, 0, 1000) : null;
 
     $stmt = $pdo->prepare('
         INSERT INTO url_checks (url_id, status_code, h1, title, description, created_at)
@@ -208,5 +211,5 @@ $app->post('/urls/{url_id}/checks', function (Request $request, Response $respon
     ]);
 
     $flash->addMessage('success', 'Страница успешно проверена');
-    return $response->withHeader('Location', '/urls/' . $urlId)->withStatus(302);
+    return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
 })->setName('urls.checks.store');

@@ -1,5 +1,6 @@
 <?php
 
+use App\ErrorHandler;
 use DI\Container;
 use Slim\Factory\AppFactory;
 use Slim\Flash\Messages;
@@ -19,11 +20,20 @@ $container->set(Messages::class, function () {
     return new Messages();
 });
 
+$container->set('view', function () {
+    return Twig::create(__DIR__ . '/../templates', ['cache' => false]);
+});
+
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-$twig = Twig::create(__DIR__ . '/../templates', ['cache' => false]);
+$twig = $container->get('view');
 $app->add(TwigMiddleware::create($app, $twig));
+
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$errorMiddleware->setDefaultErrorHandler(
+    new ErrorHandler($twig, $app->getResponseFactory())
+);
 
 require __DIR__ . '/../src/routes.php';
 
