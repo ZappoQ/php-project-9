@@ -3,9 +3,10 @@
 use App\Database;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -152,6 +153,7 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function (Request $request, Response 
     }
 
     $flash = $this->get(Messages::class);
+    $checkFailed = 'Произошла ошибка при проверке, не удалось подключиться';
 
     try {
         $client = new Client([
@@ -169,13 +171,16 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function (Request $request, Response 
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
     } catch (ConnectException $e) {
-        $flash->addMessage('error', 'Произошла ошибка при проверке, не удалось подключиться');
+        $flash->addMessage('error', $checkFailed);
         return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
-    } catch (RequestException $e) {
-        $flash->addMessage('error', 'Сервер вернул ошибку при проверке');
+    } catch (ClientException $e) {
+        $flash->addMessage('error', $checkFailed);
+        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
+    } catch (ServerException $e) {
+        $flash->addMessage('error', $checkFailed);
         return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
     } catch (GuzzleException $e) {
-        $flash->addMessage('error', 'Произошла ошибка при проверке');
+        $flash->addMessage('error', $checkFailed);
         return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
     }
 
