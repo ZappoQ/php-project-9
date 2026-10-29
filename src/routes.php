@@ -3,10 +3,7 @@
 use App\Database;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\ServerException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Exception\HttpNotFoundException;
@@ -42,11 +39,16 @@ $app->get('/urls', function (Request $request, Response $response) {
         $checksByUrlId[$check['url_id']] = $check;
     }
 
-    foreach ($urls as &$url) {
-        $url['last_check_at'] = $checksByUrlId[$url['id']]['created_at'] ?? null;
-        $url['last_status_code'] = $checksByUrlId[$url['id']]['status_code'] ?? null;
-    }
-    unset($url);
+    // Шаг 2: иммутабельная сборка
+    $urls = array_map(function (array $url) use ($checksByUrlId) {
+        $check = $checksByUrlId[$url['id']] ?? null;
+
+        return [
+            ...$url,
+            'last_check_at' => $check['created_at'] ?? null,
+            'last_status_code' => $check['status_code'] ?? null,
+        ];
+    }, $urls);
 
     $flash = $this->get(Messages::class);
     $view = $this->get('view');
@@ -170,15 +172,7 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function (Request $request, Response 
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
-    } catch (ConnectException $e) {
-        $flash->addMessage('error', $checkFailed);
-        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
-    } catch (ClientException $e) {
-        $flash->addMessage('error', $checkFailed);
-        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
-    } catch (ServerException $e) {
-        $flash->addMessage('error', $checkFailed);
-        return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);
+        // Шаг 3: единый catch
     } catch (GuzzleException $e) {
         $flash->addMessage('error', $checkFailed);
         return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);

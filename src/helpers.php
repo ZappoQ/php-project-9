@@ -1,18 +1,18 @@
 <?php
 
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Slim\Routing\RouteContext;
 
 /**
- * Редирект с использованием именованного роута.
+ * Редирект через urlFor + withHeader (Slim 4).
  */
 function redirectTo(
-    Response $response,
-    Request $request,
+    ResponseInterface $response,
+    ServerRequestInterface $request,
     string $routeName,
     array $params = []
-): Response {
+): ResponseInterface {
     $routeParser = RouteContext::fromRequest($request)->getRouteParser();
     $url = $routeParser->urlFor($routeName, $params);
 
