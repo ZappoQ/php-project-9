@@ -20,8 +20,13 @@ $container->set(Messages::class, function () {
     return new Messages();
 });
 
-$container->set('view', function () {
-    return Twig::create(__DIR__ . '/../templates', ['cache' => false]);
+$container->set('view', function () use ($container) {
+    $twig = Twig::create(__DIR__ . '/../templates', ['cache' => false]);
+
+    $flash = $container->get(Messages::class);
+    $twig->getEnvironment()->addGlobal('flash', $flash->getMessages());
+
+    return $twig;
 });
 
 AppFactory::setContainer($container);

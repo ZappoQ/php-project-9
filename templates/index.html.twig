@@ -3,10 +3,14 @@
 {% block title %}Анализатор страниц{% endblock %}
 
 {% block content %}
-    {% if error is defined and error %}
-        <div role="alert" class="mb-4 p-4 rounded bg-red-100 text-red-800">
-            {{ error }}
-        </div>
+    {% if errors is defined and errors %}
+        {% for field, messages in errors %}
+            {% for message in messages %}
+                <div role="alert" class="mb-4 p-4 rounded bg-red-100 text-red-800">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
     {% endif %}
 
     <div class="max-w-2xl mx-auto">

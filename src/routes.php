@@ -13,12 +13,8 @@ use Valitron\Validator;
 
 // Главная страница
 $app->get('/', function (Request $request, Response $response) {
-    $flash = $this->get(Messages::class);
     $view = $this->get('view');
-
-    return $view->render($response, 'index.html.twig', [
-        'flash' => $flash->getMessages(),
-    ]);
+    return $view->render($response, 'index.html.twig');
 })->setName('home');
 
 // Список всех URL
@@ -39,7 +35,6 @@ $app->get('/urls', function (Request $request, Response $response) {
         $checksByUrlId[$check['url_id']] = $check;
     }
 
-    // Шаг 2: иммутабельная сборка
     $urls = array_map(function (array $url) use ($checksByUrlId) {
         $check = $checksByUrlId[$url['id']] ?? null;
 
@@ -50,12 +45,9 @@ $app->get('/urls', function (Request $request, Response $response) {
         ];
     }, $urls);
 
-    $flash = $this->get(Messages::class);
     $view = $this->get('view');
-
     return $view->render($response, 'urls/index.html.twig', [
         'urls' => $urls,
-        'flash' => $flash->getMessages(),
     ]);
 })->setName('urls.index');
 
@@ -79,13 +71,10 @@ $app->get('/urls/{id:[0-9]+}', function (Request $request, Response $response, a
     $stmt->execute(['url_id' => $url['id']]);
     $checks = $stmt->fetchAll();
 
-    $flash = $this->get(Messages::class);
     $view = $this->get('view');
-
     return $view->render($response, 'urls/show.html.twig', [
         'url' => $url,
         'checks' => $checks,
-        'flash' => $flash->getMessages(),
     ]);
 })->setName('urls.show');
 
@@ -102,13 +91,9 @@ $app->post('/urls', function (Request $request, Response $response) {
     $flash = $this->get(Messages::class);
 
     if (!$validator->validate()) {
-        $errors = $validator->errors();
-        $errorMessage = reset($errors)[0] ?? 'Некорректный URL';
-
         $view = $this->get('view');
         return $view->render($response->withStatus(422), 'index.html.twig', [
-            'error' => $errorMessage,
-            'flash' => [],
+            'errors' => $validator->errors(),
         ]);
     }
 
@@ -172,7 +157,6 @@ $app->post('/urls/{url_id:[0-9]+}/checks', function (Request $request, Response 
         $res = $client->request('GET', $url['name']);
         $statusCode = $res->getStatusCode();
         $html = (string) $res->getBody();
-        // Шаг 3: единый catch
     } catch (GuzzleException $e) {
         $flash->addMessage('error', $checkFailed);
         return redirectTo($response, $request, 'urls.show', ['id' => $urlId]);

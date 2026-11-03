@@ -1,6 +1,7 @@
 # Анализатор страниц (PHP)
 
 [![hexlet-check](https://github.com/ZappoQ/php-project-9/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/ZappoQ/php-project-9/actions/workflows/hexlet-check.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ZappoQ_php-project-9&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ZappoQ_php-project-9)
 
 Создадите полноценное веб-приложение, которое выполняет запросы по сети и сохраняет данные в базу данных. Настроите CI и выполните деплой.
 
