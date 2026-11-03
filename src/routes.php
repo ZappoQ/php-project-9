@@ -38,11 +38,10 @@ $app->get('/urls', function (Request $request, Response $response) {
     $urls = array_map(function (array $url) use ($checksByUrlId) {
         $check = $checksByUrlId[$url['id']] ?? null;
 
-        return [
-            ...$url,
+        return array_merge($url, [
             'last_check_at' => $check['created_at'] ?? null,
             'last_status_code' => $check['status_code'] ?? null,
-        ];
+        ]);
     }, $urls);
 
     $view = $this->get('view');
